@@ -22,4 +22,4 @@ Nothing is unclear or has been difficult thus far, then again, I have not really
 
 **Mitä teen seuraavaksi?**
 
-Next week I will start coding the AI system, I will probably start by applying simpler methods such as a min-max algorithm to an AI that can cheat and knows everyone's cards and then move on to monte carlo methods once I feel like I have a good grasp of building AI systems. 
+Next week I will start coding the AI system. I will probably start by applying simpler methods such as a min-max algorithm to an AI that can cheat and knows everyone's cards, and then move on to Monte Carlo methods once I feel like I have a good grasp of building AI systems. 
