@@ -4,8 +4,12 @@ Kurssirepositorio kurssille Aineopintojen harjoitustyö: tietorakenteet ja algor
 
 ## Contract Whist AI
 
-Sovellus...
+AI system for the card game Contract Whist
 
-## Dokumentaatio
+## Viikkoraportit
+
+[Viikkoraportti 1](https://github.com/oskari83/Contract-Whist-AI/blob/master/dokumentaatio/viikkoraportti1.md)
+
+## Muu-dokumentaatio
 
 [Määrittelydokumentti](https://github.com/oskari83/Contract-Whist-AI/blob/master/dokumentaatio/maarittelydokumentti.md)

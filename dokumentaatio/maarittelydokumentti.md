@@ -27,7 +27,9 @@ Moreover, the setting of a time-complexity target for the system is not straight
 **Lähteet**
 
 (1) Background on Contract whist: https://en.wikipedia.org/wiki/Oh_Hell
+
 (2) https://softwareengineering.stackexchange.com/questions/213870/best-techniques-for-an-ai-of-a-card-game
+
 (3) http://www.aifactory.co.uk/newsletter/2013_01_reduce_burden.htm
 
 **Kurssin hallintaan liittyvistä syistä määrittelydokumentissä tulee mainita opinto-ohjelma johon kuulut. Esimerkiksi tietojenkäsittelytieteen kandidaatti (TKT) tai bachelor’s in science (bSc)**
