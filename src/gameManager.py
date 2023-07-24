@@ -32,21 +32,6 @@ class GameManager:
 					self._io.cout("Bye, see you soon!")
 					break
 
-	def print_initial(self):
-		for i in range(0,20):
-			self._io.newline()
-		self._io.cout("-------------------------------------------------")
-		self._io.cout("|		Contract Whist v1		|")
-		self._io.cout("-------------------------------------------------")
-
-	def print_instructions(self):
-		self._io.newline()
-		self._io.cout("Welcome, Press:")
-		self._io.newline()
-		self._io.cout("[1]	To Play a Game")
-		self._io.cout("[2]	To Exit")
-		self._io.newline()
-
 	def new_game(self):
 		for i in range(0,20):
 			self._io.newline()
@@ -93,12 +78,12 @@ class GameManager:
 		self._game.start()
 
 	def new_round(self):
-		self._io.newline()
-
 		self._game.new_round()
 
+		self._io.newline()
 		self._io.cout(f"Round {self._game.get_round()} (dealing {self._game.get_round()} cards)")
 		self._io.newline()
+
 		self.print_hands()
 		self.print_trump()
 
@@ -168,7 +153,6 @@ class GameManager:
 		# so this should be refactore
 		self._game.set_bids(bidtable)
 
-		self._io.newline()
 		self.print_round_bids()
 
 		self._io.cout("Lets start the round!")
@@ -189,37 +173,11 @@ class GameManager:
 			
 			self.print_tick_cards()
 
-			# tick winner determination, why does this need to complicated?
-			# because the game-class currently only returns the index of the winning card
-			# and we need to determine who that card belongs to the person who starts the round
-			# is constantly changing
-
-			# refactor into game-class
-			winner = self._game.get_tick_highest_player() ## gives like player 3 (ind)  (4) 2
-			delta_in_starters_index = 0 ## gives like player 3 (actual) (1) 2
-			steps = self._game.get_last_tick_winner()-1
-			for i in range(0,steps):
-				if(delta_in_starters_index-1)<0:
-					delta_in_starters_index=self._game._player_count-1
-				else:
-					delta_in_starters_index-=1
-			player_one_index = delta_in_starters_index
-			if winner-1 >= player_one_index:
-				winner = winner - player_one_index
-			else:
-				winner = self._game._player_count - (player_one_index-winner)
-
-			# end-refactor
+			# important to realise this calculate function does a lot in the game-class
+			winner = self._game.calculate_and_return_tick_winner()
 
 			self._io.cout(f"Tick winner is Player {winner}")
-			self._game.set_tick_winner(winner)
 
-			# these clearings should probably also go into hte game-class
-			self._game.clear_tick_cards()
-			self._game.clear_tick_highest_player()
-
-			#self._game.clear_last_tick_winner()
-			self._io.newline()
 			self.print_tick_situation()
 
 		## set points
@@ -235,9 +193,8 @@ class GameManager:
 				points_table[i] -= 2
 				points_table[i] -= abs(bid_table[i][round-1]-tick_winners[i])
 		self._game.set_points_table(points_table)
+
 		self.print_points_situation()
-		self._game.clear_tick_cards_won()
-		self._game.clear_last_tick_winner()
 
 	def play_turn(self):
 		player = self._game.get_player_turn()
@@ -271,31 +228,32 @@ class GameManager:
 				self._io.newline()
 				self._io.cout("Error, select a card that is in the hand")
 				self._io.newline()
-		
-		#refactor this so that removing cards from hand happens in game class
-		self._game._players[player-1].remove(card)
-		#same for setting tick suit
+
 		if player == self._game.get_last_tick_winner():
-			self._game.set_tick_suit(card[0])
-			text = None
-			if card[0] == "s":
-				text = "s (spades)"
-			elif card[0] == "d":
-				text = "d (diamonds)"
-			elif card[0] == "c":
-				text = "c (clubs)"
-			elif card[0] == "h":
-				text = "h (hearts)"
-			self._io.newline()
-			self._io.cout(f"This round's suit is {text}")
+			self.print_this_rounds_suit(card)
 		
 		self._game.play_tick_card(card)
-		#the turn changing should probably also be in the game class
 		self._game.next_turn()
+
 		self._io.newline()
 
 
 	### UI print functions that simply utilize get-functions from the Game-class
+
+	def print_initial(self):
+		for i in range(0,20):
+			self._io.newline()
+		self._io.cout("-------------------------------------------------")
+		self._io.cout("|		Contract Whist v1		|")
+		self._io.cout("-------------------------------------------------")
+
+	def print_instructions(self):
+		self._io.newline()
+		self._io.cout("Welcome, Press:")
+		self._io.newline()
+		self._io.cout("[1]	To Play a Game")
+		self._io.cout("[2]	To Exit")
+		self._io.newline()
 
 	def print_hands(self):
 		self._io.cout("Hands:")
@@ -323,6 +281,7 @@ class GameManager:
 		self._io.newline()
 
 	def print_round_bids(self):
+		self._io.newline()
 		self._io.cout("Bids:")
 		for i in range(0, self._game._player_count):
 			self._io.cout(f"Player {i+1}: " + str(self._game.get_bids()[i][self._game.get_round()-1]))
@@ -332,6 +291,7 @@ class GameManager:
 		self._io.cout(self._game._players[player-1])
 
 	def print_tick_situation(self):
+		self._io.newline()
 		self._io.cout("Tick situation: [bids] [ticks won]")
 		bid_table = self._game.get_bids()
 		round = self._game.get_round()
@@ -346,3 +306,16 @@ class GameManager:
 		for i in range(0, self._game._player_count):
 			self._io.cout(f"Player {i+1}: " + str(points_table[i]))
 		self._io.newline()
+
+	def print_this_rounds_suit(self, card):
+		text = None
+		if card[0] == "s":
+			text = "s (spades)"
+		elif card[0] == "d":
+			text = "d (diamonds)"
+		elif card[0] == "c":
+			text = "c (clubs)"
+		elif card[0] == "h":
+			text = "h (hearts)"
+		self._io.newline()
+		self._io.cout(f"This round's suit is {text}")

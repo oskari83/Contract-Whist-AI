@@ -12,18 +12,19 @@ class Game:
 		self._player_count = int(players)
 		self._max_cards = int(max_cards)
 		self._round = None
-		self._trump = None
-		self._players = []
-		self._bids = [ [ [] for j in range(0,self._max_cards)] for i in range(0,self._player_count)]
+		self._trump = None # this will be single letter followed by its name eg. "s (spades)""
+		self._players = [] # this holds the players' hands
+		self._bids = [ [ [] for j in range(0,self._max_cards)] for i in range(0,self._player_count)] # for some reason (laziness) bids are held in one table for entirety of game
 		self._deck = deck_of_cards
-		self._turn_pointer = 0
+		self._turn_pointer = 0 # in the format of index, so 0 to len-1
 		self._tick_cards = []
-		self._tick_cards_won = [ 0 for i in range(0,self._player_count)]
-		self._tick_suit = None
-		self._tick_highest_player = 1
+		self._tick_cards_won = [ 0 for i in range(0,self._player_count)] # but ticks won table is only held for that round and then the data is lost
+		self._tick_suit = None # this will only be a single letter eg. "s"
+		self._tick_highest_player = 1 # in the format of player 1 rather than index
 		self._points_table = [ 0 for i in range(0,self._player_count)]
-		self._last_tick_winner = 1
-		self._last_round_starter = 1
+		self._last_tick_winner = 1 # in the format of player 1 rather than index
+		self._last_round_starter = 1 # in the format of player 1 rather than index
+		self._tick_winner = None
 			  
 	def start(self):
 		self._round = self._max_cards
@@ -47,12 +48,23 @@ class Game:
 		return self._tick_cards
 	
 	def play_tick_card(self, card):
+		# adds card to tick cards
 		self._tick_cards.append(card)
+
+		# if not first player, updates the index of who has the highest card in the tick cards
 		if len(self._tick_cards)!=1:
 			answer = self.compare_higher(card,self._tick_cards[self._tick_highest_player-1],self._tick_suit,self._trump[0])
 			if answer!=None:
 				if answer==card:
 					self._tick_highest_player = len(self._tick_cards)
+
+		# removes card from the player's hand
+		player = self.get_player_turn()
+		self._players[player-1].remove(card)
+
+		# sets the suit of the tick if we are the first player
+		if player == self.get_last_tick_winner():
+			self.set_tick_suit(card[0])
 
 	def clear_tick_cards(self):
 		self._tick_cards = []
@@ -70,7 +82,7 @@ class Game:
 		return self._tick_highest_player
 	
 	def set_tick_winner(self, player):
-		self._tick_cards_won[player-1]+=1
+		self._tick_cards_won[player-1] += 1
 		self._last_tick_winner = player
 
 	def get_last_tick_winner(self):
@@ -104,6 +116,8 @@ class Game:
 	## in this variation rounds go downwards
 	def next_round(self):
 		self._round -= 1
+		self.clear_tick_cards_won()
+		self.clear_last_tick_winner()
 	
 	def new_round(self):
 		self.shuffle_deck()
@@ -130,6 +144,33 @@ class Game:
 
 	def set_turn_pointer_at_tick_begin(self):
 		self._turn_pointer = self._last_tick_winner - 1
+
+	def calculate_and_return_tick_winner(self):
+		winner = self.get_tick_highest_player()
+		delta_in_starters_index = 0
+		steps = self.get_last_tick_winner()-1
+		for i in range(0,steps):
+			if(delta_in_starters_index-1)<0:
+				delta_in_starters_index=self._player_count-1
+			else:
+				delta_in_starters_index-=1
+		player_one_index = delta_in_starters_index
+		if winner-1 >= player_one_index:
+			winner = winner - player_one_index
+		else:
+			winner = self._player_count - (player_one_index-winner)
+
+		## adds winner to class state variables
+		self._tick_winner = winner
+
+		## adds entry to tick win table
+		self.set_tick_winner(winner)
+
+		## clears variables at the end of the tick
+		self.clear_tick_cards()
+		self.clear_tick_highest_player()
+
+		return self._tick_winner
 
 	def pick_trump(self):
 		trump = random.choice(["d (diamonds)","s (spades)","c (clubs)","h (hearts)"])
