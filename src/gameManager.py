@@ -1,15 +1,6 @@
 from consoleIO import ConsoleIO
 from game import Game
 
-deck_of_cards = ["d2","d3","d4","d5","d6","d7","d8","d9","d10","dJ","dQ","dK","dA",
-		 "s2","s3","s4","s5","s6","s7","s8","s9","s10","sJ","sQ","sK","sA",
-		 "c2","c3","c4","c5","c6","c7","c8","c9","c10","cJ","cQ","cK","cA",
-		 "h2","h3","h4","h5","h6","h7","h8","h9","h10","hJ","hQ","hK","hA"]
-
-## big todo is to give the start of the next round to the winner of the tick
-## also to check that player is legally allowed to play that card
-## and type checking everywhere is missing
-
 class GameManager:
 	def __init__(self):
 		self._io = ConsoleIO()
@@ -20,12 +11,14 @@ class GameManager:
 
 		while True:
 			if self._game:
+				# runs game for determined amount of rounds
 				for i in range (0, self._game._max_cards):
 					self.new_round()
 					self._game.set_turn_pointer_at_round_begin()
 					self.bid()
 					self.play_tick()
 					self._game.next_round()
+				# can add code to sum up points at the end
 				self._io.cout("Game finished!")
 				self._game = None
 			else:
@@ -118,7 +111,12 @@ class GameManager:
 		for i in range(0, self._game._player_count):
 			bid = None
 
+			# if we are last, runs this 
 			if i == self._game._player_count-1:
+				# enforces a rule, making sure the player does not cheat
+				# I think the Game class does not need to be the enforcer
+				# I think that is left to UI and manager
+				# also because it might be useful at points to allow the AI to cheat
 				cannot_bid = max_bid_sum - current_bid_sum
 				while True:
 					self._io.cout(f"Player {self._game.get_player_turn()}'s bid (cannot bid {cannot_bid}): ")
@@ -160,10 +158,14 @@ class GameManager:
 					else:
 						break
 
+			# sets the bid
+			# this is problematic and should be refactored so that all the bids aren't set at once to Game-class
+			# since AI might bid in-between
 			bidtable[i][self._game.get_round()-1] = bid
 			current_bid_sum += bid
 			self._game.next_turn()
 
+		# so this should be refactore
 		self._game.set_bids(bidtable)
 
 		self._io.newline()
@@ -173,18 +175,26 @@ class GameManager:
 		self._io.newline()
 
 	def play_tick(self):
+		# loop that playes through all ticks 
 		for i in range(0, self._game.get_round()):
 
 			self._io.cout(f"Tick {i+1} (Trump: {self._game.get_trump()}): ")
 			self._io.newline()
 
 			self._game.set_turn_pointer_at_tick_begin()
-
+			
+			# each players move
 			for j in range(0, self._game._player_count):
 				self.play_turn()
+			
 			self.print_tick_cards()
 
-			## pray that this works
+			# tick winner determination, why does this need to complicated?
+			# because the game-class currently only returns the index of the winning card
+			# and we need to determine who that card belongs to the person who starts the round
+			# is constantly changing
+
+			# refactor into game-class
 			winner = self._game.get_tick_highest_player() ## gives like player 3 (ind)  (4) 2
 			delta_in_starters_index = 0 ## gives like player 3 (actual) (1) 2
 			steps = self._game.get_last_tick_winner()-1
@@ -199,12 +209,15 @@ class GameManager:
 			else:
 				winner = self._game._player_count - (player_one_index-winner)
 
-			## hopefully winner is now correct
+			# end-refactor
 
 			self._io.cout(f"Tick winner is Player {winner}")
 			self._game.set_tick_winner(winner)
+
+			# these clearings should probably also go into hte game-class
 			self._game.clear_tick_cards()
 			self._game.clear_tick_highest_player()
+
 			#self._game.clear_last_tick_winner()
 			self._io.newline()
 			self.print_tick_situation()
@@ -225,6 +238,64 @@ class GameManager:
 		self.print_points_situation()
 		self._game.clear_tick_cards_won()
 		self._game.clear_last_tick_winner()
+
+	def play_turn(self):
+		player = self._game.get_player_turn()
+		player_hand = self._game._players[player-1]
+		self._io.cout(f"Player {player}'s turn")
+
+		while True:
+			self._io.cout(f"Pick a card to play:")
+			self.print_player_hand(player)
+			
+			#this is the main input
+			card = self._io.cin("Command: ")
+
+			#all of this just checks the player is making a legal move
+			if card in player_hand:
+				if player==self._game.get_last_tick_winner() or card[0]==self._game.get_tick_suit():
+					break
+				else:
+					suits_in_hand = []
+					for c in player_hand:
+						suits_in_hand.append(c[0])
+					
+					tick_suit = self._game.get_tick_suit()
+					if tick_suit in suits_in_hand:
+						self._io.newline()
+						self._io.cout(f"Error, you have a card of the suit that has to be played")
+						self._io.newline()
+					else:
+						break
+			else:
+				self._io.newline()
+				self._io.cout("Error, select a card that is in the hand")
+				self._io.newline()
+		
+		#refactor this so that removing cards from hand happens in game class
+		self._game._players[player-1].remove(card)
+		#same for setting tick suit
+		if player == self._game.get_last_tick_winner():
+			self._game.set_tick_suit(card[0])
+			text = None
+			if card[0] == "s":
+				text = "s (spades)"
+			elif card[0] == "d":
+				text = "d (diamonds)"
+			elif card[0] == "c":
+				text = "c (clubs)"
+			elif card[0] == "h":
+				text = "h (hearts)"
+			self._io.newline()
+			self._io.cout(f"This round's suit is {text}")
+		
+		self._game.play_tick_card(card)
+		#the turn changing should probably also be in the game class
+		self._game.next_turn()
+		self._io.newline()
+
+
+	### UI print functions that simply utilize get-functions from the Game-class
 
 	def print_hands(self):
 		self._io.cout("Hands:")
@@ -255,53 +326,6 @@ class GameManager:
 		self._io.cout("Bids:")
 		for i in range(0, self._game._player_count):
 			self._io.cout(f"Player {i+1}: " + str(self._game.get_bids()[i][self._game.get_round()-1]))
-		self._io.newline()
-
-	def play_turn(self):
-		player = self._game.get_player_turn()
-		player_hand = self._game._players[player-1]
-		self._io.cout(f"Player {player}'s turn")
-
-		while True:
-			self._io.cout(f"Pick a card to play:")
-			self.print_player_hand(player)
-			card = self._io.cin("Command: ")
-			if card in player_hand:
-				if player==self._game.get_last_tick_winner() or card[0]==self._game.get_tick_suit():
-					break
-				else:
-					suits_in_hand = []
-					for c in player_hand:
-						suits_in_hand.append(c[0])
-					
-					tick_suit = self._game.get_tick_suit()
-					if tick_suit in suits_in_hand:
-						self._io.newline()
-						self._io.cout(f"Error, you have a card of the suit that has to be played")
-						self._io.newline()
-					else:
-						break
-			else:
-				self._io.newline()
-				self._io.cout("Error, select a card that is in the hand")
-				self._io.newline()
-		
-		self._game._players[player-1].remove(card)
-		if player == self._game.get_last_tick_winner():
-			self._game.set_tick_suit(card[0])
-			text = None
-			if card[0] == "s":
-				text = "s (spades)"
-			elif card[0] == "d":
-				text = "d (diamonds)"
-			elif card[0] == "c":
-				text = "c (clubs)"
-			elif card[0] == "h":
-				text = "h (hearts)"
-			self._io.newline()
-			self._io.cout(f"This round's suit is {text}")
-		self._game.play_tick_card(card)
-		self._game.next_turn()
 		self._io.newline()
 
 	def print_player_hand(self, player):
