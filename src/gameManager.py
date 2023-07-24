@@ -12,7 +12,7 @@ class GameManager:
 		while True:
 			if self._game:
 				# runs game for determined amount of rounds
-				for i in range (0, self._game._max_cards):
+				for i in range (0, self._game.get_max_cards()):
 					self.new_round()
 					self.bid()
 					self.play_tick()
@@ -45,7 +45,7 @@ class GameManager:
 		self.print_trump()
 
 	def bid(self):
-		for i in range(0, self._game._player_count):
+		for i in range(0, self._game.get_player_count()):
 			bid = self.get_player_bid_input(i)
 
 			self._game.player_bid(bid)
@@ -63,15 +63,15 @@ class GameManager:
 			self._game.set_turn_pointer_at_tick_begin()
 			
 			# each players move
-			for j in range(0, self._game._player_count):
+			for j in range(0, self._game.get_player_count()):
 				self.play_turn()
 			
 			self.print_tick_cards()
 
 			# important to realise this calculate function does a lot in the game-class
-			winner = self._game.calculate_and_return_tick_winner()
+			self._game.calculate_tick_winner()
 
-			self._io.cout(f"Tick winner is Player {winner}")
+			self._io.cout(f"Tick winner is Player {self._game.get_tick_winner}")
 
 			self.print_tick_situation()
 
@@ -91,7 +91,7 @@ class GameManager:
 		bid = None
 
 		# if we are last, runs this 
-		if index == self._game._player_count-1:
+		if index == self._game.get_player_count()-1:
 			# enforces a rule, making sure the player does not cheat
 			# I think the Game class does not need to be the enforcer
 			# I think that is left to UI and manager
@@ -241,7 +241,7 @@ class GameManager:
 
 	def print_hands(self):
 		self._io.cout("Hands:")
-		for i in range(0, self._game._player_count):
+		for i in range(0, self._game.get_player_count()):
 			self._game._players[i].sort()
 			hand = ""
 			for j in range(0, self._game.get_round()):
@@ -266,14 +266,14 @@ class GameManager:
 
 	def print_round_information(self):
 		self._io.newline()
-		self._io.cout(f"Round {self._game._max_cards - self._game.get_round() + 1} (dealing {self._game.get_round()} cards)")
+		self._io.cout(f"Round {self._game.get_max_cards() - self._game.get_round() + 1} (dealing {self._game.get_round()} cards)")
 		self._io.newline()
 
 
 	def print_round_bids(self):
 		self._io.newline()
 		self._io.cout("Bids:")
-		for i in range(0, self._game._player_count):
+		for i in range(0, self._game.get_player_count()):
 			self._io.cout(f"Player {i+1}: " + str(self._game.get_bids()[i][self._game.get_round()-1]))
 		self._io.newline()
 		self._io.cout("Lets start the round!")
@@ -288,14 +288,14 @@ class GameManager:
 		bid_table = self._game.get_bids()
 		round = self._game.get_round()
 		tick_winners = self._game.get_tick_winners()
-		for i in range(0, self._game._player_count):
+		for i in range(0, self._game.get_player_count()):
 			self._io.cout(f"Player {i+1}: " + str(bid_table[i][round-1]) + " " + str(tick_winners[i]))
 		self._io.newline()
 
 	def print_points_situation(self):
 		points_table = self._game.get_points_table()
 		self._io.cout("Point situation: ")
-		for i in range(0, self._game._player_count):
+		for i in range(0, self._game.get_player_count()):
 			self._io.cout(f"Player {i+1}: " + str(points_table[i]))
 		self._io.newline()
 

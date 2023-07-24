@@ -29,6 +29,12 @@ class Game:
 			  
 	def start(self):
 		self._round = self._max_cards
+
+	def get_player_count(self):
+		return self._player_count
+	
+	def get_max_cards(self):
+		return self._max_cards
 		
 	# same as get_max_bidsum
 	def get_round(self):
@@ -162,7 +168,7 @@ class Game:
 	def set_turn_pointer_at_tick_begin(self):
 		self._turn_pointer = self._last_tick_winner - 1
 
-	def calculate_and_return_tick_winner(self):
+	def calculate_tick_winner(self):
 		winner = self.get_tick_highest_player()
 		delta_in_starters_index = 0
 		steps = self.get_last_tick_winner()-1
@@ -186,7 +192,8 @@ class Game:
 		## clears variables at the end of the tick
 		self.clear_tick_cards()
 		self.clear_tick_highest_player()
-
+	
+	def get_tick_winner(self):
 		return self._tick_winner
 	
 	def calculate_points(self):
