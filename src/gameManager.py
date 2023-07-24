@@ -22,11 +22,12 @@ class GameManager:
 			if self._game:
 				for i in range (0, self._game._max_cards):
 					self.new_round()
+					self._game.set_turn_pointer_at_round_begin()
 					self.bid()
 					self.play_tick()
 					self._game.next_round()
-				self._io.cout("Game finished, TODO: sum up points")
-				break
+				self._io.cout("Game finished!")
+				self._game = None
 			else:
 				self.print_instructions()
 				command = self._io.cin("Command: ")
@@ -34,8 +35,6 @@ class GameManager:
 				if(command=="1"):
 					self.new_game()
 				elif(command=="2"):
-					pass
-				elif(command=="3"):
 					self._io.newline()
 					self._io.cout("Bye, see you soon!")
 					break
@@ -52,26 +51,56 @@ class GameManager:
 		self._io.cout("Welcome, Press:")
 		self._io.newline()
 		self._io.cout("[1]	To Play a Game")
-		self._io.cout("[2]	-")
-		self._io.cout("[3]	To Exit")
+		self._io.cout("[2]	To Exit")
 		self._io.newline()
 
 	def new_game(self):
 		for i in range(0,20):
 			self._io.newline()
 
-		self._io.cout("Give the number of players (3-5):")
-		player_count = self._io.cin("Command: ")
-		self._io.cout("Give the starting number of cards (1-10):")
-		max_cards = self._io.cin("Command: ")
+		while True:
+			self._io.cout("Give the number of players (3-5):")
+
+			try:
+				player_count = int(self._io.cin("Command: "))
+			except:
+				self._io.newline()
+				self._io.cout("Error, please give an integer")
+				self._io.newline()
+				continue
+
+			if player_count>=3 and player_count<=5:
+				break
+			else:
+				self._io.newline()
+				self._io.cout("Error, please give a number between 3 and 5")
+				self._io.newline()
+		
+		while True:
+			self._io.cout("Give the starting number of cards (1-10):")
+
+			try:
+				max_cards = int(self._io.cin("Command: "))
+			except:
+				self._io.newline()
+				self._io.cout("Error, please give an integer")
+				self._io.newline()
+				continue
+
+			if max_cards>=1 and max_cards<=10:
+				break
+			else:
+				self._io.newline()
+				self._io.cout("Error, please give a number between 1 and 10")
+				self._io.newline()
+
 		self._io.cout("Starting game...")
 
 		self._game = Game(player_count,max_cards)
 		self._game.start()
 
 	def new_round(self):
-		for i in range(0,20):
-			self._io.newline()
+		self._io.newline()
 
 		self._game.new_round()
 
@@ -82,7 +111,7 @@ class GameManager:
 
 	def bid(self):
 		bidtable = self._game.get_bids()
-		#print(bidtable)
+
 		current_bid_sum = 0
 		max_bid_sum = self._game.get_round()
 
@@ -93,16 +122,43 @@ class GameManager:
 				cannot_bid = max_bid_sum - current_bid_sum
 				while True:
 					self._io.cout(f"Player {self._game.get_player_turn()}'s bid (cannot bid {cannot_bid}): ")
-					bid = int(self._io.cin("Command: "))
+
+					try:
+						bid = int(self._io.cin("Command: "))
+					except:
+						self._io.newline()
+						self._io.cout("Error, please give an integer")
+						self._io.newline()
+						continue
+
 					if bid!=cannot_bid:
 						break
+					elif bid<0:
+						self._io.newline()
+						self._io.cout(f"Error, please bid a positive amount")
+						self._io.newline()
 					else:
 						self._io.newline()
 						self._io.cout(f"Error! You cannot bid {cannot_bid}.")
 						self._io.newline()
 			else:
-				self._io.cout(f"Player {self._game.get_player_turn()}'s bid: ")
-				bid = int(self._io.cin("Command: "))
+				while True:
+					self._io.cout(f"Player {self._game.get_player_turn()}'s bid: ")
+
+					try:
+						bid = int(self._io.cin("Command: "))
+					except:
+						self._io.newline()
+						self._io.cout("Error, please give an integer")
+						self._io.newline()
+						continue
+					
+					if bid<0:
+						self._io.newline()
+						self._io.cout(f"Error, please bid a positive amount")
+						self._io.newline()
+					else:
+						break
 
 			bidtable[i][self._game.get_round()-1] = bid
 			current_bid_sum += bid
@@ -118,16 +174,38 @@ class GameManager:
 
 	def play_tick(self):
 		for i in range(0, self._game.get_round()):
+
 			self._io.cout(f"Tick {i+1} (Trump: {self._game.get_trump()}): ")
 			self._io.newline()
+
+			self._game.set_turn_pointer_at_tick_begin()
+
 			for j in range(0, self._game._player_count):
 				self.play_turn()
 			self.print_tick_cards()
-			winner = self._game.get_tick_highest_player()
+
+			## pray that this works
+			winner = self._game.get_tick_highest_player() ## gives like player 3 (ind)  (4) 2
+			delta_in_starters_index = 0 ## gives like player 3 (actual) (1) 2
+			steps = self._game.get_last_tick_winner()-1
+			for i in range(0,steps):
+				if(delta_in_starters_index-1)<0:
+					delta_in_starters_index=self._game._player_count-1
+				else:
+					delta_in_starters_index-=1
+			player_one_index = delta_in_starters_index
+			if winner-1 >= player_one_index:
+				winner = winner - player_one_index
+			else:
+				winner = self._game._player_count - (player_one_index-winner)
+
+			## hopefully winner is now correct
+
 			self._io.cout(f"Tick winner is Player {winner}")
 			self._game.set_tick_winner(winner)
 			self._game.clear_tick_cards()
 			self._game.clear_tick_highest_player()
+			#self._game.clear_last_tick_winner()
 			self._io.newline()
 			self.print_tick_situation()
 
@@ -146,6 +224,7 @@ class GameManager:
 		self._game.set_points_table(points_table)
 		self.print_points_situation()
 		self._game.clear_tick_cards_won()
+		self._game.clear_last_tick_winner()
 
 	def print_hands(self):
 		self._io.cout("Hands:")
@@ -187,15 +266,28 @@ class GameManager:
 			self._io.cout(f"Pick a card to play:")
 			self.print_player_hand(player)
 			card = self._io.cin("Command: ")
-			if card in self._game._players[player-1]:
-				break
+			if card in player_hand:
+				if player==self._game.get_last_tick_winner() or card[0]==self._game.get_tick_suit():
+					break
+				else:
+					suits_in_hand = []
+					for c in player_hand:
+						suits_in_hand.append(c[0])
+					
+					tick_suit = self._game.get_tick_suit()
+					if tick_suit in suits_in_hand:
+						self._io.newline()
+						self._io.cout(f"Error, you have a card of the suit that has to be played")
+						self._io.newline()
+					else:
+						break
 			else:
 				self._io.newline()
 				self._io.cout("Error, select a card that is in the hand")
 				self._io.newline()
 		
 		self._game._players[player-1].remove(card)
-		if player == 1:
+		if player == self._game.get_last_tick_winner():
 			self._game.set_tick_suit(card[0])
 			text = None
 			if card[0] == "s":

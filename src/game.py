@@ -22,6 +22,8 @@ class Game:
 		self._tick_suit = None
 		self._tick_highest_player = 1
 		self._points_table = [ 0 for i in range(0,self._player_count)]
+		self._last_tick_winner = 1
+		self._last_round_starter = 1
 			  
 	def start(self):
 		self._round = self._max_cards
@@ -61,11 +63,25 @@ class Game:
 	def set_tick_suit(self, suit):
 		self._tick_suit = suit
 
+	def get_tick_suit(self):
+		return self._tick_suit
+
 	def get_tick_highest_player(self):
 		return self._tick_highest_player
 	
 	def set_tick_winner(self, player):
 		self._tick_cards_won[player-1]+=1
+		self._last_tick_winner = player
+
+	def get_last_tick_winner(self):
+		return self._last_tick_winner
+	
+	def clear_last_tick_winner(self):
+		self._last_round_starter += 1
+		self._last_tick_winner = self._last_round_starter
+
+	def get_last_round_starter(self):
+		return self._last_round_starter
 
 	def clear_tick_highest_player(self):
 		self._tick_highest_player = 1
@@ -108,6 +124,12 @@ class Game:
 				self._deck.remove(card)
 				hands[j].append(card)
 		self._players = hands
+
+	def set_turn_pointer_at_round_begin(self):
+		self._turn_pointer = self._last_round_starter - 1
+
+	def set_turn_pointer_at_tick_begin(self):
+		self._turn_pointer = self._last_tick_winner - 1
 
 	def pick_trump(self):
 		trump = random.choice(["d (diamonds)","s (spades)","c (clubs)","h (hearts)"])
