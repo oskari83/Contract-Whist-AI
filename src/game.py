@@ -25,10 +25,12 @@ class Game:
 		self._last_tick_winner = 1 # in the format of player 1 rather than index
 		self._last_round_starter = 1 # in the format of player 1 rather than index
 		self._tick_winner = None
+		self._bidsum = 0
 			  
 	def start(self):
 		self._round = self._max_cards
 		
+	# same as get_max_bidsum
 	def get_round(self):
 		return self._round
 	
@@ -43,6 +45,19 @@ class Game:
 	
 	def set_bids(self, table):
 		self._bids = table
+
+	def player_bid(self, bid_amount):
+		self._bids[self.get_player_turn()-1][self.get_round()-1] = bid_amount
+		self.add_to_bidsum(bid_amount)
+
+	def clear_bidsum(self):
+		self._bidsum = 0
+
+	def add_to_bidsum(self, amount):
+		self._bidsum += amount
+
+	def get_current_bidsum(self):
+		return self._bidsum
 
 	def get_tick_cards(self):
 		return self._tick_cards
@@ -123,6 +138,8 @@ class Game:
 		self.shuffle_deck()
 		self.deal_cards()
 		self.pick_trump()
+		self.clear_bidsum()
+		self.set_turn_pointer_at_round_begin()
 
 	def shuffle_deck(self):
 		self._deck = deck_of_cards
@@ -171,6 +188,20 @@ class Game:
 		self.clear_tick_highest_player()
 
 		return self._tick_winner
+	
+	def calculate_points(self):
+		bid_table = self.get_bids()
+		round = self.get_round()
+		tick_winners = self.get_tick_winners()
+		points_table = self.get_points_table()
+		for i in range(0,self._player_count):
+			if bid_table[i][round-1] == tick_winners[i]:
+				points_table[i] += 2
+				points_table[i] += bid_table[i][round-1]
+			else:
+				points_table[i] -= 2
+				points_table[i] -= abs(bid_table[i][round-1]-tick_winners[i])
+		self.set_points_table(points_table)
 
 	def pick_trump(self):
 		trump = random.choice(["d (diamonds)","s (spades)","c (clubs)","h (hearts)"])
