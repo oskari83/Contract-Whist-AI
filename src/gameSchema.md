@@ -15,12 +15,12 @@ game.start()
 ## To run through gameplay
 
 for i in range (0, game.get_max_cards()):
-	self.new_round()
+	new_round()
 
 	-->		game.new_round()
 
 
-	self.bid()
+	bid()
 
 	-->		for i in range(0, game.get_player_count()):
 				bid = get_bid_input() # input some positive integer
@@ -29,7 +29,7 @@ for i in range (0, game.get_max_cards()):
 				game.next_turn()
 
 
-	self.play_tick()
+	play_tick()
 
 	-->		# loop that plays through all ticks in a round
 			for i in range(0, game.get_round()):
@@ -37,9 +37,9 @@ for i in range (0, game.get_max_cards()):
 				
 				# each players move
 				for j in range(0, game.get_player_count()):
-					self.play_turn()
+					play_turn()
 
-					-->		card = self.get_card_input() # input some card
+					-->		card = get_card_input() # input some card
 		
 							game.play_tick_card(card)
 							game.next_turn()
