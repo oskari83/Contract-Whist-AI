@@ -1,1 +1,8 @@
 __pycache__
+htmlcov
+poetry.lock
+.pytest_cache
+.venv
+.vscode
+.DS_Store
+.coverage

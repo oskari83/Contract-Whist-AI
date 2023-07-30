@@ -1,238 +1,248 @@
 import random
 
 deck_of_cards = ["d2","d3","d4","d5","d6","d7","d8","d9","d10","dJ","dQ","dK","dA",
-		 "s2","s3","s4","s5","s6","s7","s8","s9","s10","sJ","sQ","sK","sA",
-		 "c2","c3","c4","c5","c6","c7","c8","c9","c10","cJ","cQ","cK","cA",
-		 "h2","h3","h4","h5","h6","h7","h8","h9","h10","hJ","hQ","hK","hA"]
+         "s2","s3","s4","s5","s6","s7","s8","s9","s10","sJ","sQ","sK","sA",
+         "c2","c3","c4","c5","c6","c7","c8","c9","c10","cJ","cQ","cK","cA",
+         "h2","h3","h4","h5","h6","h7","h8","h9","h10","hJ","hQ","hK","hA"]
 
 card_ranking = ["2","3","4","5","6","7","8","9","1","J","Q","K","A"]
 
 class Game:
-	def __init__(self, players, max_cards):
-		self._player_count = int(players)
-		self._max_cards = int(max_cards)
-		self._round = None
-		self._trump = None # this will be single letter followed by its name eg. "s (spades)""
-		self._players = [] # this holds the players' hands
-		self._bids = [ [ [] for j in range(0,self._max_cards)] for i in range(0,self._player_count)] # for some reason (laziness) bids are held in one table for entirety of game
-		self._deck = deck_of_cards
-		self._turn_pointer = 0 # in the format of index, so 0 to len-1
-		self._tick_cards = []
-		self._tick_cards_won = [ 0 for i in range(0,self._player_count)] # but ticks won table is only held for that round and then the data is lost
-		self._tick_suit = None # this will only be a single letter eg. "s"
-		self._tick_highest_player = 1 # in the format of player 1 rather than index
-		self._points_table = [ 0 for i in range(0,self._player_count)]
-		self._last_tick_winner = 1 # in the format of player 1 rather than index
-		self._last_round_starter = 1 # in the format of player 1 rather than index
-		self._tick_winner = None
-		self._bidsum = 0
-			  
-	def start(self):
-		self._round = self._max_cards
+    def __init__(self, players, max_cards):
+        self._player_count = int(players)
+        self._max_cards = int(max_cards)
+        self._round = None
+        self._trump = None # this will be single letter followed by its name eg. "s (spades)""
+        self._players = [] # this holds the players' hands
 
-	def get_player_count(self):
-		return self._player_count
-	
-	def get_max_cards(self):
-		return self._max_cards
-		
-	# same as get_max_bidsum
-	def get_round(self):
-		return self._round
-	
-	def get_trump(self):
-		return self._trump
-	
-	def get_player_turn(self):
-		return self._turn_pointer + 1
-	
-	def get_bids(self):
-		return self._bids
-	
-	def set_bids(self, table):
-		self._bids = table
+        # bids are held in one table for entirety of game
+        self._bids = [ [ [] for j in range(0,self._max_cards)] for i in range(0,self._player_count)]
+        self._deck = deck_of_cards
+        self._turn_pointer = 0 # in the format of index, so 0 to len-1
+        self._tick_cards = []
 
-	def player_bid(self, bid_amount):
-		self._bids[self.get_player_turn()-1][self.get_round()-1] = bid_amount
-		self.add_to_bidsum(bid_amount)
+        # ticks won table is only held for that round and then the data is lost
+        self._tick_cards_won = [ 0 for i in range(0,self._player_count)]
 
-	def clear_bidsum(self):
-		self._bidsum = 0
+        self._tick_suit = None # this will only be a single letter eg. "s"
+        self._tick_highest_player = 1 # in the format of player 1 rather than index
+        self._points_table = [ 0 for i in range(0,self._player_count)]
+        self._last_tick_winner = 1 # in the format of player 1 rather than index
+        self._last_round_starter = 1 # in the format of player 1 rather than index
+        self._tick_winner = None
+        self._bidsum = 0
 
-	def add_to_bidsum(self, amount):
-		self._bidsum += amount
+    def start(self):
+        self._round = self._max_cards
 
-	def get_current_bidsum(self):
-		return self._bidsum
+    def get_player_count(self):
+        return self._player_count
 
-	def get_tick_cards(self):
-		return self._tick_cards
-	
-	def play_tick_card(self, card):
-		# adds card to tick cards
-		self._tick_cards.append(card)
+    def get_max_cards(self):
+        return self._max_cards
 
-		# if not first player, updates the index of who has the highest card in the tick cards
-		if len(self._tick_cards)!=1:
-			answer = self.compare_higher(card,self._tick_cards[self._tick_highest_player-1],self._tick_suit,self._trump[0])
-			if answer!=None:
-				if answer==card:
-					self._tick_highest_player = len(self._tick_cards)
+    # same as get_max_bidsum
+    def get_round(self):
+        return self._round
 
-		# removes card from the player's hand
-		player = self.get_player_turn()
-		self._players[player-1].remove(card)
+    def get_trump(self):
+        return self._trump
 
-		# sets the suit of the tick if we are the first player
-		if player == self.get_last_tick_winner():
-			self.set_tick_suit(card[0])
+    def get_player_turn(self):
+        return self._turn_pointer + 1
 
-	def clear_tick_cards(self):
-		self._tick_cards = []
+    def get_bids(self):
+        return self._bids
 
-	def clear_tick_cards_won(self):
-		self._tick_cards_won = [ 0 for i in range(0,self._player_count)]
+    def set_bids(self, table):
+        self._bids = table
 
-	def set_tick_suit(self, suit):
-		self._tick_suit = suit
+    def player_bid(self, bid_amount):
+        self._bids[self.get_player_turn()-1][self.get_round()-1] = bid_amount
+        self.add_to_bidsum(bid_amount)
 
-	def get_tick_suit(self):
-		return self._tick_suit
+    def clear_bidsum(self):
+        self._bidsum = 0
 
-	def get_tick_highest_player(self):
-		return self._tick_highest_player
-	
-	def set_tick_winner(self, player):
-		self._tick_cards_won[player-1] += 1
-		self._last_tick_winner = player
+    def add_to_bidsum(self, amount):
+        self._bidsum += amount
 
-	def get_last_tick_winner(self):
-		return self._last_tick_winner
-	
-	def clear_last_tick_winner(self):
-		self._last_round_starter += 1
-		self._last_tick_winner = self._last_round_starter
+    def get_current_bidsum(self):
+        return self._bidsum
 
-	def get_last_round_starter(self):
-		return self._last_round_starter
+    def get_tick_cards(self):
+        return self._tick_cards
 
-	def clear_tick_highest_player(self):
-		self._tick_highest_player = 1
+    def play_tick_card(self, card):
+        # adds card to tick cards
+        self._tick_cards.append(card)
 
-	def get_tick_winners(self):
-		return self._tick_cards_won
-	
-	def get_points_table(self):
-		return self._points_table
-	
-	def set_points_table(self,table):
-		self._points_table = table
-	
-	def next_turn(self):
-		if self._turn_pointer == self._player_count-1:
-			self._turn_pointer = 0
-		else:
-			self._turn_pointer += 1
+        # if not first player, updates the index of who has the highest card in the tick cards
+        if len(self._tick_cards)!=1:
+            answer = self.compare_higher(
+                card,self._tick_cards[self._tick_highest_player-1],
+                self._tick_suit,self._trump[0]
+            )
+            if answer is not None:
+                if answer==card:
+                    self._tick_highest_player = len(self._tick_cards)
 
-	## in this variation rounds go downwards
-	def next_round(self):
-		self._round -= 1
-		self.clear_tick_cards_won()
-		self.clear_last_tick_winner()
-	
-	def new_round(self):
-		self.shuffle_deck()
-		self.deal_cards()
-		self.pick_trump()
-		self.clear_bidsum()
-		self.set_turn_pointer_at_round_begin()
+        # removes card from the player's hand
+        player = self.get_player_turn()
+        self._players[player-1].remove(card)
 
-	def shuffle_deck(self):
-		self._deck = deck_of_cards
-		random.shuffle(self._deck)
+        # sets the suit of the tick if we are the first player
+        if player == self.get_last_tick_winner():
+            self.set_tick_suit(card[0])
 
-	def deal_cards(self):
-		hands = []
-		for i in range(0,self._player_count):
-			hands.append([])
-		for i in range(0,self.get_round()):
-			for j in range(0,self._player_count):
-				card = random.choice(self._deck)
-				self._deck.remove(card)
-				hands[j].append(card)
-		self._players = hands
+    def clear_tick_cards(self):
+        self._tick_cards = []
 
-	def set_turn_pointer_at_round_begin(self):
-		self._turn_pointer = self._last_round_starter - 1
+    def clear_tick_cards_won(self):
+        self._tick_cards_won = [ 0 for i in range(0,self._player_count)]
 
-	def set_turn_pointer_at_tick_begin(self):
-		self._turn_pointer = self._last_tick_winner - 1
+    def set_tick_suit(self, suit):
+        self._tick_suit = suit
 
-	def calculate_tick_winner(self):
-		winner = self.get_tick_highest_player()
-		delta_in_starters_index = 0
-		steps = self.get_last_tick_winner()-1
-		for i in range(0,steps):
-			if(delta_in_starters_index-1)<0:
-				delta_in_starters_index=self._player_count-1
-			else:
-				delta_in_starters_index-=1
-		player_one_index = delta_in_starters_index
-		if winner-1 >= player_one_index:
-			winner = winner - player_one_index
-		else:
-			winner = self._player_count - (player_one_index-winner)
+    def get_tick_suit(self):
+        return self._tick_suit
 
-		## adds winner to class state variables
-		self._tick_winner = winner
+    def get_tick_highest_player(self):
+        return self._tick_highest_player
 
-		## adds entry to tick win table
-		self.set_tick_winner(winner)
+    def set_tick_winner(self, player):
+        self._tick_cards_won[player-1] += 1
+        self._last_tick_winner = player
 
-		## clears variables at the end of the tick
-		self.clear_tick_cards()
-		self.clear_tick_highest_player()
-	
-	def get_tick_winner(self):
-		return self._tick_winner
-	
-	def calculate_points(self):
-		bid_table = self.get_bids()
-		round = self.get_round()
-		tick_winners = self.get_tick_winners()
-		points_table = self.get_points_table()
-		for i in range(0,self._player_count):
-			if bid_table[i][round-1] == tick_winners[i]:
-				points_table[i] += 2
-				points_table[i] += bid_table[i][round-1]
-			else:
-				points_table[i] -= 2
-				points_table[i] -= abs(bid_table[i][round-1]-tick_winners[i])
-		self.set_points_table(points_table)
+    def get_last_tick_winner(self):
+        return self._last_tick_winner
 
-	def pick_trump(self):
-		trump = random.choice(["d (diamonds)","s (spades)","c (clubs)","h (hearts)"])
-		self._trump = trump
+    def clear_last_tick_winner(self):
+        self._last_round_starter += 1
+        self._last_tick_winner = self._last_round_starter
 
-	def compare_higher(self, card1, card2, play_suit, trump_suit):
-		if card1[0] == card2[0]:
-			if card1[0] != play_suit and card1[0] != trump_suit:
-				return None
-			else:
-				card1_index = card_ranking.index(card1[1])
-				card2_index = card_ranking.index(card2[1])
-				if card1_index>card2_index:
-					return card1
-				else:
-					return card2
-		else:
-			if card1[0]==trump_suit:
-				return card1
-			elif card2[0]==trump_suit:
-				return card2
-			elif card1[0]==play_suit:
-				return card1
-			elif card2[0]==play_suit:
-				return card2
-			else:
-				return None
+    def get_last_round_starter(self):
+        return self._last_round_starter
+
+    def clear_tick_highest_player(self):
+        self._tick_highest_player = 1
+
+    def get_tick_winners(self):
+        return self._tick_cards_won
+
+    def get_points_table(self):
+        return self._points_table
+
+    def set_points_table(self,table):
+        self._points_table = table
+
+    def next_turn(self):
+        if self._turn_pointer == self._player_count-1:
+            self._turn_pointer = 0
+        else:
+            self._turn_pointer += 1
+
+    ## in this variation rounds go downwards
+    def next_round(self):
+        self._round -= 1
+        self.clear_tick_cards_won()
+        self.clear_last_tick_winner()
+
+    def new_round(self):
+        self.shuffle_deck()
+        self.deal_cards()
+        self.pick_trump()
+        self.clear_bidsum()
+        self.set_turn_pointer_at_round_begin()
+
+    def shuffle_deck(self):
+        self._deck = deck_of_cards
+        random.shuffle(self._deck)
+
+    def deal_cards(self):
+        hands = []
+        for i in range(0,self._player_count):
+            hands.append([])
+        for i in range(0,self.get_round()):
+            for j in range(0,self._player_count):
+                card = random.choice(self._deck)
+                self._deck.remove(card)
+                hands[j].append(card)
+        self._players = hands
+
+    def set_turn_pointer_at_round_begin(self):
+        self._turn_pointer = self._last_round_starter - 1
+
+    def set_turn_pointer_at_tick_begin(self):
+        self._turn_pointer = self._last_tick_winner - 1
+
+    def calculate_tick_winner(self):
+        winner = self.get_tick_highest_player()
+        delta_in_starters_index = 0
+        steps = self.get_last_tick_winner()-1
+        for i in range(0,steps):
+            if(delta_in_starters_index-1)<0:
+                delta_in_starters_index=self._player_count-1
+            else:
+                delta_in_starters_index-=1
+        player_one_index = delta_in_starters_index
+        if winner-1 >= player_one_index:
+            winner = winner - player_one_index
+        else:
+            winner = self._player_count - (player_one_index-winner)
+
+        ## adds winner to class state variables
+        self._tick_winner = winner
+
+        ## adds entry to tick win table
+        self.set_tick_winner(winner)
+
+        ## clears variables at the end of the tick
+        self.clear_tick_cards()
+        self.clear_tick_highest_player()
+
+    def get_tick_winner(self):
+        return self._tick_winner
+
+    def calculate_points(self):
+        bid_table = self.get_bids()
+        current_round = self.get_round()
+        tick_winners = self.get_tick_winners()
+        points_table = self.get_points_table()
+        for i in range(0,self._player_count):
+            if bid_table[i][current_round-1] == tick_winners[i]:
+                points_table[i] += 2
+                points_table[i] += bid_table[i][current_round-1]
+            else:
+                points_table[i] -= 2
+                points_table[i] -= abs(bid_table[i][current_round-1]-tick_winners[i])
+        self.set_points_table(points_table)
+
+    def pick_trump(self):
+        trump = random.choice(["d (diamonds)","s (spades)","c (clubs)","h (hearts)"])
+        self._trump = trump
+
+    # compares which card is higher when given the two cards, play suit, and the trump suit
+    def compare_higher(self, card1, card2, play_suit, trump_suit):
+        if card1[0] == card2[0]:
+            if card1[0] != play_suit and card1[0] != trump_suit:
+                return None
+
+            card1_index = card_ranking.index(card1[1])
+            card2_index = card_ranking.index(card2[1])
+            if card1_index>card2_index:
+                return card1
+            else:
+                return card2
+
+        else:
+            if card1[0]==trump_suit:
+                return card1
+            elif card2[0]==trump_suit:
+                return card2
+            elif card1[0]==play_suit:
+                return card1
+            elif card2[0]==play_suit:
+                return card2
+
+            return None
